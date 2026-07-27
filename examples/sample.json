@@ -1,7 +1,15 @@
 {
-    "notes":  {
-                  "deployment":  "Document the reviewed release lane",
-                  "recovery":  "Verify restore steps separately"
-              },
-    "root":  "."
+  "root": ".",
+  "sections": {
+    "architecture": {"summary": "Python CLI with deterministic JSON and Markdown reports"},
+    "operations": {"owner": "Maintainer", "routine": "Run the complete quality gate before release"},
+    "dependencies": {"source": "pyproject.toml", "update_policy": "Reviewed dependency pull requests"},
+    "deployment": {"lane": "Protected main branch followed by an annotated release tag"},
+    "recovery": {"strategy": "Clone the release tag and verify the published artifacts"},
+    "handoff": {"first_step": "Read README.md and DEVELOPMENT.md"}
+  },
+  "recovery_checklist": [
+    {"id": "REC-1", "step": "Rebuild the wheel and source archive", "status": "verified", "evidence": "release workflow"}
+  ],
+  "redact": ["replace-this-private-value"]
 }
