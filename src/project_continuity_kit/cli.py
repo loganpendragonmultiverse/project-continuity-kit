@@ -5,16 +5,15 @@ import json
 import sys
 from pathlib import Path
 
-from .core import analyze, render_json, render_markdown
+from .core import analyze, render_json, render_markdown, write_bundle
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Generate a deterministic, reviewable report from explicit JSON input."
-    )
+    parser = argparse.ArgumentParser(description="Build a redacted, verifiable continuity package.")
     parser.add_argument("input", type=Path, help="UTF-8 JSON input file")
     parser.add_argument("--format", choices=("markdown", "json"), default="markdown")
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--bundle", type=Path, help="write a deterministic continuity ZIP")
     args = parser.parse_args(argv)
     try:
         data = json.loads(args.input.read_text(encoding="utf-8"))
@@ -26,7 +25,9 @@ def main(argv: list[str] | None = None) -> int:
             args.output.write_text(rendered, encoding="utf-8")
         else:
             sys.stdout.write(rendered)
-    except (OSError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
+        if args.bundle:
+            write_bundle(report, args.bundle)
+    except (OSError, UnicodeError, TypeError, ValueError, json.JSONDecodeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     return 0
