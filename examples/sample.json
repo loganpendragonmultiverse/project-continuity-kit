@@ -1,0 +1,7 @@
+{
+    "notes":  {
+                  "deployment":  "Document the reviewed release lane",
+                  "recovery":  "Verify restore steps separately"
+              },
+    "root":  "."
+}
