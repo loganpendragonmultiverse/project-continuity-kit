@@ -5,7 +5,13 @@ from zipfile import ZipFile
 import pytest
 
 from project_continuity_kit.cli import main
-from project_continuity_kit.core import analyze, render_json, render_markdown, write_bundle
+from project_continuity_kit.core import (
+    analyze,
+    render_json,
+    render_markdown,
+    verify_bundle,
+    write_bundle,
+)
 
 
 def complete_input(root: Path) -> dict:
@@ -13,6 +19,7 @@ def complete_input(root: Path) -> dict:
     (root / ".github" / "workflows" / "ci.yml").write_text("name: CI", encoding="utf-8")
     (root / "pyproject.toml").write_text("[project]", encoding="utf-8")
     (root / ".env.example").write_text("TOKEN=replace", encoding="utf-8")
+    (root / "README.md").write_text("Run pytest to verify recovery.", encoding="utf-8")
     return {
         "root": str(root),
         "sections": {
@@ -30,6 +37,11 @@ def complete_input(root: Path) -> dict:
             {"step": "Restore backup", "status": "verified", "evidence": "test-1"}
         ],
         "redact": ["private-name"],
+        "required_commands": ["python"],
+        "required_files": ["pyproject.toml"],
+        "required_artifacts": ["README.md"],
+        "required_environment": ["TOKEN"],
+        "documented_commands": ["pytest"],
     }
 
 
@@ -41,7 +53,9 @@ def test_complete_package_is_ready_and_redacted(tmp_path):
     assert report["signals"]["ci_workflows"] == [".github/workflows/ci.yml"]
     assert report["privacy"]["source_contents_included"] is False
     assert report["manifest_sha256"] in render_markdown(report)
-    assert '"schema_version": 2' in render_json(report)
+    assert '"schema_version": 3' in render_json(report)
+    assert report["recovery_drill"]["ready"] is True
+    assert report["privacy"]["recovery_commands_executed"] is False
 
 
 def test_gaps_exclusions_and_previous_diff(tmp_path):
@@ -69,6 +83,20 @@ def test_bundle_is_deterministic_and_safe(tmp_path):
         write_bundle(report, bundle)
 
 
+def test_bundle_verification_detects_repository_drift(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    report = analyze(complete_input(source))
+    bundle = tmp_path / "continuity.zip"
+    write_bundle(report, bundle)
+    matching = verify_bundle(bundle, source)
+    assert matching["matches"] is True
+    (source / "new.txt").write_text("new", encoding="utf-8")
+    drift = verify_bundle(bundle, source)
+    assert drift["matches"] is False
+    assert drift["changes"]["added"] == ["new.txt"]
+
+
 @pytest.mark.parametrize(
     "data,message",
     [
@@ -78,6 +106,7 @@ def test_bundle_is_deterministic_and_safe(tmp_path):
         ({"root": ".", "redact": [""]}, "redact must contain"),
         ({"root": ".", "sections": []}, "sections must be an object"),
         ({"root": ".", "recovery_checklist": "bad"}, "checklist must be a list"),
+        ({"root": ".", "required_files": [""]}, "required_files must contain"),
         (
             {"root": ".", "recovery_checklist": [{"step": "x", "status": "done"}]},
             "status is invalid",
@@ -101,3 +130,6 @@ def test_cli_writes_report_and_bundle_without_overwrite(tmp_path, capsys):
     assert main([str(input_path), "--output", str(output)]) == 0
     assert output.exists()
     assert main([str(input_path), "--output", str(output)]) == 2
+    assert main(["--verify-bundle", str(bundle), "--root", str(source), "--format", "json"]) == 0
+    assert json.loads(capsys.readouterr().out)["matches"] is True
+    assert main(["--verify-bundle", str(bundle)]) == 2

@@ -3,12 +3,13 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import shutil
 from pathlib import Path
 from typing import Any
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 PROJECT = "project-continuity-kit"
-VERSION = 2
+VERSION = 3
 SECTIONS = ("architecture", "operations", "dependencies", "deployment", "recovery", "handoff")
 DEFAULT_EXCLUDES = {".git", ".env", ".venv", "node_modules", "dist", "build", "__pycache__"}
 SENSITIVE_KEY = re.compile(r"(?:password|secret|token|api[_-]?key|private[_-]?key)", re.IGNORECASE)
@@ -79,6 +80,81 @@ def _changes(files: list[dict[str, Any]], previous: dict[str, Any] | None) -> di
     }
 
 
+def _string_list(data: dict[str, Any], key: str) -> list[str]:
+    value = data.get(key, [])
+    if not isinstance(value, list) or any(not isinstance(item, str) or not item for item in value):
+        raise ValueError(f"{key} must contain non-empty strings")
+    return value
+
+
+def _declared_environment(root: Path) -> set[str]:
+    declared: set[str] = set()
+    for name in (".env.example", ".env.sample", "example.env"):
+        path = root / name
+        if not path.is_file():
+            continue
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            candidate = line.strip()
+            if candidate and not candidate.startswith("#") and "=" in candidate:
+                declared.add(candidate.split("=", 1)[0].strip())
+    return declared
+
+
+def _recovery_drill(root: Path, data: dict[str, Any], paths: list[str]) -> dict[str, Any]:
+    required_commands = _string_list(data, "required_commands")
+    required_files = _string_list(data, "required_files")
+    required_artifacts = _string_list(data, "required_artifacts")
+    required_environment = _string_list(data, "required_environment")
+    documented_commands = _string_list(data, "documented_commands")
+    declared = _declared_environment(root)
+    docs = [root / name for name in ("README.md", "DEVELOPMENT.md", "OPERATIONS.md", "RECOVERY.md")]
+    documentation = "\n".join(
+        path.read_text(encoding="utf-8", errors="replace") for path in docs if path.is_file()
+    )
+    checks: list[dict[str, Any]] = []
+    checks += [
+        {
+            "kind": "command_available",
+            "subject": command,
+            "passed": shutil.which(command) is not None,
+        }
+        for command in required_commands
+    ]
+    checks += [
+        {"kind": "file_present", "subject": name, "passed": name in paths}
+        for name in required_files
+    ]
+    checks += [
+        {
+            "kind": "artifact_present",
+            "subject": pattern,
+            "passed": any(root.glob(pattern)),
+        }
+        for pattern in required_artifacts
+    ]
+    checks += [
+        {"kind": "environment_declared", "subject": name, "passed": name in declared}
+        for name in required_environment
+    ]
+    checks += [
+        {
+            "kind": "command_documented",
+            "subject": command,
+            "passed": command.casefold() in documentation.casefold(),
+        }
+        for command in documented_commands
+    ]
+    failed = [check for check in checks if not check["passed"]]
+    return {
+        "mode": "non-executing-observation",
+        "checks": checks,
+        "passed": len(checks) - len(failed),
+        "failed": len(failed),
+        "ready": bool(checks) and not failed,
+        "arbitrary_commands_executed": False,
+    }
+
+
 def _continuity(data: dict[str, Any]) -> dict[str, Any]:
     root = Path(_require(data, "root")).resolve()
     if not root.is_dir():
@@ -131,6 +207,7 @@ def _continuity(data: dict[str, Any]) -> dict[str, Any]:
         )
     paths = [item["path"] for item in files]
     signals = _signals(paths)
+    drill = _recovery_drill(root, data, paths)
     gaps = [f"missing {name} continuity notes" for name in SECTIONS if not sections[name]]
     if not signals["dependency_manifests"]:
         gaps.append("no dependency manifest observed")
@@ -138,6 +215,8 @@ def _continuity(data: dict[str, Any]) -> dict[str, Any]:
         gaps.append("no CI workflow observed")
     if not checklist or any(item["status"] != "verified" for item in checklist):
         gaps.append("recovery checklist is not fully verified")
+    if drill["checks"] and not drill["ready"]:
+        gaps.append("recovery drill has failed observations")
     digest_input = json.dumps(files, sort_keys=True, separators=(",", ":")).encode()
     return {
         "root": root.name,
@@ -148,6 +227,7 @@ def _continuity(data: dict[str, Any]) -> dict[str, Any]:
         "signals": signals,
         "sections": sections,
         "recovery_checklist": checklist,
+        "recovery_drill": drill,
         "changes": _changes(files, data.get("previous")),
         "gaps": gaps,
         "ready_for_handoff": not gaps,
@@ -155,6 +235,8 @@ def _continuity(data: dict[str, Any]) -> dict[str, Any]:
             "source_contents_included": False,
             "excluded_names": sorted(excluded),
             "redaction_terms_applied": len(terms_raw),
+            "environment_values_read": False,
+            "recovery_commands_executed": False,
         },
     }
 
@@ -196,3 +278,45 @@ def write_bundle(report: dict[str, Any], target: Path) -> None:
             info.compress_type = ZIP_DEFLATED
             info.external_attr = 0o644 << 16
             archive.writestr(info, content.encode("utf-8"))
+
+
+def verify_bundle(bundle: Path, root: Path) -> dict[str, Any]:
+    bundle, root = bundle.resolve(), root.resolve()
+    if not root.is_dir():
+        raise ValueError("verification root must be an existing directory")
+    with ZipFile(bundle) as archive:
+        names = archive.namelist()
+        if names.count("continuity.json") != 1 or any(
+            Path(name).is_absolute() or ".." in Path(name).parts for name in names
+        ):
+            raise ValueError("bundle does not contain one safe continuity.json")
+        previous = json.loads(archive.read("continuity.json").decode("utf-8"))
+    if previous.get("project") != PROJECT or not isinstance(previous.get("files"), list):
+        raise ValueError("bundle is not a Project Continuity Kit package")
+    current = analyze(
+        {
+            "root": str(root),
+            "sections": previous.get("sections", {}),
+            "recovery_checklist": previous.get("recovery_checklist", []),
+            "previous": previous,
+        }
+    )
+    changes = current["changes"]
+    missing_signals = [
+        name
+        for name, entries in previous.get("signals", {}).items()
+        if entries and not current["signals"].get(name)
+    ]
+    return {
+        "schema_version": 1,
+        "project": PROJECT,
+        "bundle": str(bundle),
+        "root": str(root),
+        "bundle_manifest_sha256": previous.get("manifest_sha256"),
+        "current_manifest_sha256": current["manifest_sha256"],
+        "matches": not changes["added"] and not changes["removed"] and not changes["changed"],
+        "changes": changes,
+        "missing_capability_signals": missing_signals,
+        "current_gaps": current["gaps"],
+        "boundary": "Verification compares file evidence and declared continuity signals; it does not execute restore or deployment commands.",
+    }
