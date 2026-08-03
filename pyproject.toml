@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "project-continuity-kit"
-version = "1.1.0"
-description = "Generate a portable, redacted project continuity package from a local repository."
+version = "1.2.0"
+description = "Build and verify redacted continuity bundles with non-executing recovery drills."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"

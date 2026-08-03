@@ -11,5 +11,10 @@
   "recovery_checklist": [
     {"id": "REC-1", "step": "Rebuild the wheel and source archive", "status": "verified", "evidence": "release workflow"}
   ],
+  "required_commands": ["python"],
+  "required_files": ["pyproject.toml", "README.md"],
+  "required_artifacts": [".github/workflows/release.yml"],
+  "required_environment": [],
+  "documented_commands": ["pytest", "python -m build"],
   "redact": ["replace-this-private-value"]
 }
