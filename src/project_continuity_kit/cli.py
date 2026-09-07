@@ -6,12 +6,13 @@ import sys
 from pathlib import Path
 
 from .core import analyze, render_json, render_markdown, verify_bundle, write_bundle
+from .handoff import render_html
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build a redacted, verifiable continuity package.")
     parser.add_argument("input", nargs="?", type=Path, help="UTF-8 JSON input file")
-    parser.add_argument("--format", choices=("markdown", "json"), default="markdown")
+    parser.add_argument("--format", choices=("markdown", "json", "html"), default="markdown")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--bundle", type=Path, help="write a deterministic continuity ZIP")
     parser.add_argument(
@@ -29,7 +30,15 @@ def main(argv: list[str] | None = None) -> int:
                 raise ValueError("provide an input specification or --verify-bundle")
             data = json.loads(args.input.read_text(encoding="utf-8"))
             report = analyze(data)
-        rendered = render_json(report) if args.format == "json" else render_markdown(report)
+        rendered = (
+            render_html(report)
+            if args.format == "html"
+            else render_json(report)
+            if args.format == "json"
+            else render_markdown(report)
+            if not args.verify_bundle
+            else render_json(report)
+        )
         if args.output:
             if args.output.exists():
                 raise ValueError(f"output already exists: {args.output}")

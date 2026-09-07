@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
+from .handoff import render_html, validate_spec
+
 PROJECT = "project-continuity-kit"
 VERSION = 3
 SECTIONS = ("architecture", "operations", "dependencies", "deployment", "recovery", "handoff")
@@ -187,6 +189,9 @@ def _continuity(data: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(sections_raw, dict):
         raise TypeError("sections must be an object")
     sections = {name: _redact(sections_raw.get(name, {}), tuple(terms_raw)) for name in SECTIONS}
+    owners = data.get("owners", {})
+    if set(owners) - set(SECTIONS):
+        raise ValueError("owners keys must be continuity section names")
     checklist_raw = data.get("recovery_checklist", [])
     if not isinstance(checklist_raw, list):
         raise TypeError("recovery_checklist must be a list")
@@ -226,6 +231,15 @@ def _continuity(data: dict[str, Any]) -> dict[str, Any]:
         "files": files,
         "signals": signals,
         "sections": sections,
+        "evidence_boundary": {
+            "observed": "File hashes, sizes, paths and non-executing checks from this run",
+            "asserted": "Sections, owners and checklist statuses are human assertions, not independently verified recovery evidence",
+        },
+        "ownership": {
+            "by_section": {name: owners.get(name, "") for name in SECTIONS},
+            "assigned": sum(bool(owners.get(name)) for name in SECTIONS),
+            "total": len(SECTIONS),
+        },
         "recovery_checklist": checklist,
         "recovery_drill": drill,
         "changes": _changes(files, data.get("previous")),
@@ -242,6 +256,7 @@ def _continuity(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def analyze(data: dict[str, Any]) -> dict[str, Any]:
+    validate_spec(data)
     return {"schema_version": VERSION, "project": PROJECT, **_continuity(data)}
 
 
@@ -270,6 +285,7 @@ def write_bundle(report: dict[str, Any], target: Path) -> None:
     entries = {
         "continuity.json": render_json(report),
         "HANDOFF.md": render_markdown(report),
+        "HANDOFF.html": render_html(report),
         "VERIFY.txt": f"manifest_sha256={report['manifest_sha256']}\n",
     }
     with ZipFile(target, "w", compression=ZIP_DEFLATED) as archive:

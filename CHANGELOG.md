@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0 - 2026-09-07
+
+- Validate continuity inputs and add an HTML handoff with evidence links, ownership coverage and changes since a prior report.
+- Added regression coverage for the audited behavior and invalid inputs.
+
 ## 1.2.0 - 2026-08-03
 
 - Added non-executing recovery drills for required commands, files, artifact patterns, declared environment names, and documented commands.

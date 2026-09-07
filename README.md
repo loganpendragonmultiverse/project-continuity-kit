@@ -43,3 +43,13 @@ python -m build
 ```
 
 Part of the [Logan Pendragon Forge open-source collection](https://www.loganpendragonforge.com/open-source/). Licensed under the [MIT License](LICENSE).
+
+## Version 1.3.0: reviewed improvements
+
+Validate continuity inputs and add an HTML handoff with evidence links, ownership coverage and changes since a prior report.
+
+```bash
+continuity-kit examples/sample.json --format html --output handoff.html
+```
+
+Field-specific checks cover root paths, list fields, sections, checklist records, ownership and prior file manifests. Optional `owners` maps continuity section names to owner names. HTML links checklist evidence and change entries to observed file records when exact relative paths match. Human notes, owners and checklist statuses remain author assertions, even when labeled verified by the author; they are separate from this run's file/hash and non-executing observations. Supply `previous` with a prior report for added/removed/changed/unchanged summaries. Deterministic bundles now include HANDOFF.html. Commands, restoration and deployment are never executed.
