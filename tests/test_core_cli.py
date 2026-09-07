@@ -77,7 +77,7 @@ def test_bundle_is_deterministic_and_safe(tmp_path):
     bundle = tmp_path / "continuity.zip"
     write_bundle(report, bundle)
     with ZipFile(bundle) as archive:
-        assert archive.namelist() == ["continuity.json", "HANDOFF.md", "VERIFY.txt"]
+        assert archive.namelist() == ["continuity.json", "HANDOFF.md", "HANDOFF.html", "VERIFY.txt"]
         assert b"source_contents_included" in archive.read("continuity.json")
     with pytest.raises(ValueError, match="already exists"):
         write_bundle(report, bundle)
