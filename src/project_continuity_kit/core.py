@@ -157,6 +157,41 @@ def _recovery_drill(root: Path, data: dict[str, Any], paths: list[str]) -> dict[
     }
 
 
+def _validated_scope(value: Any) -> list[str]:
+    if not isinstance(value, dict) or set(value) != {
+        "version",
+        "excluded_names",
+        "environment_files",
+    }:
+        raise ValueError("scan_scope must be a versioned scan-scope object")
+    if (
+        type(value["version"]) is not int
+        or value["version"] != 1
+        or value["environment_files"] != "exclude-dotenv-except-example"
+    ):
+        raise ValueError("unsupported scan_scope policy")
+    names = value["excluded_names"]
+    if not isinstance(names, list) or any(
+        not isinstance(name, str)
+        or not name
+        or name in {".", ".."}
+        or any(c in name for c in "/\\:")
+        for name in names
+    ):
+        raise ValueError("scan_scope excluded_names must contain path component names")
+    if names != sorted(set(names)) or not DEFAULT_EXCLUDES.issubset(names):
+        raise ValueError("scan_scope excluded_names must be sorted, unique and include defaults")
+    return names
+
+
+def _scope(names: list[str]) -> dict[str, Any]:
+    return {
+        "version": 1,
+        "excluded_names": names,
+        "environment_files": "exclude-dotenv-except-example",
+    }
+
+
 def _continuity(data: dict[str, Any]) -> dict[str, Any]:
     root = Path(_require(data, "root")).resolve()
     if not root.is_dir():
@@ -164,7 +199,9 @@ def _continuity(data: dict[str, Any]) -> dict[str, Any]:
     extra_excludes = data.get("exclude", [])
     if not isinstance(extra_excludes, list):
         raise TypeError("exclude must be a list")
-    excluded = DEFAULT_EXCLUDES | {str(item) for item in extra_excludes}
+    excluded = DEFAULT_EXCLUDES | set(extra_excludes)
+    scan_scope = _scope(sorted(excluded))
+    _validated_scope(scan_scope)
     files: list[dict[str, Any]] = []
     for path in sorted(root.rglob("*")):
         relative = path.relative_to(root)
@@ -225,6 +262,7 @@ def _continuity(data: dict[str, Any]) -> dict[str, Any]:
     digest_input = json.dumps(files, sort_keys=True, separators=(",", ":")).encode()
     return {
         "root": root.name,
+        "scan_scope": scan_scope,
         "file_count": len(files),
         "total_bytes": sum(item["bytes"] for item in files),
         "manifest_sha256": hashlib.sha256(digest_input).hexdigest(),
@@ -307,11 +345,28 @@ def verify_bundle(bundle: Path, root: Path) -> dict[str, Any]:
         ):
             raise ValueError("bundle does not contain one safe continuity.json")
         previous = json.loads(archive.read("continuity.json").decode("utf-8"))
-    if previous.get("project") != PROJECT or not isinstance(previous.get("files"), list):
+    if (
+        not isinstance(previous, dict)
+        or previous.get("project") != PROJECT
+        or not isinstance(previous.get("files"), list)
+    ):
         raise ValueError("bundle is not a Project Continuity Kit package")
+    if "scan_scope" in previous:
+        excluded_names = _validated_scope(previous["scan_scope"])
+        scope_source = "versioned"
+    else:
+        # Legacy reports recorded effective exclusions in privacy metadata.
+        privacy = previous.get("privacy", {})
+        if not isinstance(privacy, dict):
+            raise ValueError("legacy privacy metadata must be an object")
+        excluded_names = _validated_scope(
+            _scope(privacy.get("excluded_names", sorted(DEFAULT_EXCLUDES)))
+        )
+        scope_source = "legacy-privacy" if "excluded_names" in privacy else "legacy-defaults"
     current = analyze(
         {
             "root": str(root),
+            "exclude": excluded_names,
             "sections": previous.get("sections", {}),
             "recovery_checklist": previous.get("recovery_checklist", []),
             "previous": previous,
@@ -328,6 +383,8 @@ def verify_bundle(bundle: Path, root: Path) -> dict[str, Any]:
         "project": PROJECT,
         "bundle": str(bundle),
         "root": str(root),
+        "scan_scope": current["scan_scope"],
+        "scan_scope_source": scope_source,
         "bundle_manifest_sha256": previous.get("manifest_sha256"),
         "current_manifest_sha256": current["manifest_sha256"],
         "matches": not changes["added"] and not changes["removed"] and not changes["changed"],
