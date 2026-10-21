@@ -26,3 +26,7 @@ Native filesystem behavior requires actual Windows junction/symlink execution an
 ## 1.4.1 release verification
 
 Release closure in 1.4.1 repeats the complete formatting, lint, strict types, original regression/coverage and dependency audit gates before building. `tools/release_package.py` validates runtime/package/tag versions and writes SHA256SUMS for exactly the current wheel and source distribution. Original CI matrix/protections and all feature tests remain unchanged.
+
+## 1.4.2 release identity checks
+
+Release packaging compares runtime AST, project/tag version, and built wheel METADATA/source PKG-INFO Name, Version and Requires-Python before checksumming exactly two distributions. Run the packaging helper with Python 3.11+; supported application runtimes and native acceptance requirements are unchanged.

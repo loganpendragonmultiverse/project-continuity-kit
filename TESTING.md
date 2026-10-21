@@ -26,3 +26,7 @@ Run the full suite from fresh installed wheel and sdist environments, outside th
 ## 1.4.1 release verification
 
 For 1.4.1 release acceptance, use Python 3.12 (or 3.11+) for the release packaging helper because it uses standard-library `tomllib`. The runtime and platform test matrix still support Python 3.10. Run the full original quality suite, `python -m build`, then `python tools/release_package.py`. Independently compare both checksum rows with the exact installed/tag distributions. A mismatched GITHUB_REF_NAME must refuse checksum generation before publication. Require successful protected main and exact-tag jobs; retain actual Windows installed/native acceptance.
+
+## 1.4.2 release identity checks
+
+Release packaging compares runtime AST, project/tag version, and built wheel METADATA/source PKG-INFO Name, Version and Requires-Python before checksumming exactly two distributions. Run the packaging helper with Python 3.11+; supported application runtimes and native acceptance requirements are unchanged.

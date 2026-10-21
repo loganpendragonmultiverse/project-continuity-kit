@@ -74,3 +74,7 @@ Explicit redaction terms cover owners, checklist step/evidence notes and section
 ## 1.4.1 release verification
 
 The 1.4.1 release includes `SHA256SUMS` for the exact wheel and source distribution. The release job repeats the full quality gate and refuses a tag/package/runtime version mismatch.
+
+## 1.4.2 release identity checks
+
+Release packaging compares runtime AST, project/tag version, and built wheel METADATA/source PKG-INFO Name, Version and Requires-Python before checksumming exactly two distributions. Run the packaging helper with Python 3.11+; supported application runtimes and native acceptance requirements are unchanged.

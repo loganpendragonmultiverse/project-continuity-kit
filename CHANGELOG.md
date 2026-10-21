@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.2 — 2026-10-21
+
+- Verify built distribution Name, Version and Requires-Python against project, runtime and tag identity before writing exact two-payload checksums.
+- Add portable metadata mismatch, duplicate and missing-field, runtime, tag and payload-set regressions without changing native requirements or supported runtimes.
+
 ## [1.4.1] - 2026-10-21
 
 - Repeat full formatting, lint, strict types, regression, audit and build checks in the exact-tag release workflow.
