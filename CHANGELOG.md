@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0] - 2026-10-21
+
+- Fail closed on incomplete, unsafe, changed or over-budget inventories and record reusable scan limits.
+- Keep all prerequisite observations inside the same included, hash-bound inventory.
+- Verify complete bounded ZIP members, strict report metadata, manifest fingerprints and verification records before drift comparison.
+- Redact explicit private terms from owners and checklist notes; protect distinct CLI outputs with exclusive creation and avoid self-generated drift.
+- Ship all four authority documents, license and runnable example instructions with installed distributions.
+
 ## [1.3.1] - 2026-10-16
 
 New reports include scan_scope version 1: sorted unique excluded_names (the effective defaults plus custom path-component names) and environment_files set to exclude-dotenv-except-example. Bundle verification validates and reuses this scope, so excluded additions and edits do not count as drift while included changes do. Unknown policy versions, malformed objects, unsafe names and missing default exclusions are rejected. Legacy bundles use validated privacy.excluded_names when available; bundles without that metadata use documented defaults and report scan_scope_source as legacy-defaults. Scope provenance is explicit in verification output. ZIP output remains deterministic and contains file metadata rather than source contents. Recovery, restore and deployment commands are never executed.
