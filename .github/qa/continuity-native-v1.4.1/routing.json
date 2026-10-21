@@ -1,0 +1,90 @@
+{
+  "slug": "project-continuity-kit",
+  "module": "project_continuity_kit",
+  "version": "1.4.1",
+  "commit": "956898963e11453d813c8a157a08a22729d9e23b",
+  "tag": "v1.4.1",
+  "tag_object": "b10f21778ee295ebd68ff2bb8b28ddad66db4995",
+  "tag_run": 39536554273,
+  "source_files": {
+    ".github/CODEOWNERS": "333daf522f45e35b36cd6cd46b40033664810240682721a7ca2f6b99ce4be97a",
+    ".github/ISSUE_TEMPLATE/bug.yml": "2d3dc2366bb5d37fccb3504eac34ddf1fa30bee81fac29e00a5274fade999138",
+    ".github/ISSUE_TEMPLATE/config.yml": "d7b17086263a0799c0201f6fb8fe4d654fba1cf89425023c456cc40db492d68f",
+    ".github/ISSUE_TEMPLATE/feature.yml": "4594a2c388f5b83d035ae786ac37668aeaec01f9b752ebb669c130443d614982",
+    ".github/PULL_REQUEST_TEMPLATE.md": "c23f3cdb67823ab29917b5398bb44cf63a0781922d0148c7cb53c07bd6c6733b",
+    ".github/dependabot.yml": "cb9f0362fef586a179d603bc853a4efe85ed12b59cd950ac0a719f0e1009c70f",
+    ".github/workflows/ci.yml": "a97c6996c740daaaaf068a17de5f206fc8f65bde26f1210f15b116a6d2ca0772",
+    ".github/workflows/codeql.yml": "44ce224de74b39f9f182917dd253d5b598feaa769fbdd17016b5ceca477588cd",
+    ".github/workflows/release.yml": "b52abd34b76a2a748fbdafa03cb8a6ad468c6548cccf0a06210f1040536f179c",
+    ".gitignore": "5ffd2d0c55f65d1339eb0a22a3057c90b9f0200486d9271b1837f7a77b841704",
+    "CHANGELOG.md": "4e95124386126cf032f5ad42cb04c2ef875b346bcabc304aa9e1789f19a8b5b4",
+    "CODE_OF_CONDUCT.md": "f192ebeaab7930863403aa14ec66746ba02ada4dfa0f7ddee9edd941790f77f1",
+    "CONTRIBUTING.md": "a855d1908bb89be2e2a2dd13ed2125632f8ef4f299397fdaed17261e56765847",
+    "DEVELOPMENT.md": "bd09beb2d20937e3adbca8e9c389d1965eaa4bb78221e972cc8d5db580d426dc",
+    "LICENSE": "55a70b9017dbf171520ab336a0b3b2f4283878d87008382e1f5209afa97dd73b",
+    "MANIFEST.in": "8c315c29c7da0879506000b72795d03875d21c7602f145f5dbd9445a3ddfd350",
+    "README.md": "6befb0e34cbf734ecd9180ab9373c4afe77f2e365f8c324f7bf6259758097e7c",
+    "SECURITY.md": "95ed04c98af6869af1b1151d6ed5ccb0728af5fe96db3d154a6bd62932b49f43",
+    "SUPPORT.md": "84798345f278ce2cac2d99df3062fc3fc672f5cc7d76cd6fd6f7e76e96ff6149",
+    "TESTING.md": "d223c4b8d0152c1f8f33ec79d647c6059e44002d9261ee0531836db61e892da4",
+    "examples/README.md": "a6a96e26633011c76ca4940cf22a9911c2b119c751df2edfe9682af13098eefc",
+    "examples/sample.json": "de684bdb2cfb2ebb7fbf1cf9e7377fdae2c0c4b849df85713e9b3fc875a61397",
+    "pyproject.toml": "d8f5bcd2a07b7c95e4d0ce4dac9998de4341de912c88573e74e8ca970c266494",
+    "src/project_continuity_kit/__init__.py": "409848667a29bed95b5cc7a30d3867bc08f2a35e8b5016eedae5878e74976715",
+    "src/project_continuity_kit/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+    "src/project_continuity_kit/bundle_io.py": "939d458b66ffba8614a71f12d02a048ee138680d56c18eae8a6fdf10c818f56d",
+    "src/project_continuity_kit/cli.py": "c11008e348f575af1965870a993e200aafec6014b2c390787a1c0b63814b017b",
+    "src/project_continuity_kit/core.py": "ca04581f831f795a3ebd4a76cab323596558423911463874a89bbdf5603b1bca",
+    "src/project_continuity_kit/filesystem.py": "5f0822e6a6bc3a15ce3714f5b7ff33f0f818c59bd754101693e9ae679f0eb807",
+    "src/project_continuity_kit/handoff.py": "42d2bd5a5c3fb2e8feecdb0ef3da447a822de15cbd6bb115675db6e4814ffd45",
+    "tests/test_bounded_regression.py": "d44afca824ee81bd1ba98a66629fe062a37fa513ca01e369fa97f54a03c8e0d9",
+    "tests/test_bundle_boundaries.py": "85a6f1d5503672a0fb504b31a230cea990416d5613386ed15b7e7984ea523e1b",
+    "tests/test_complete_observations.py": "a94397963212b0332ceeda54ce692a3d23ba7b4963d4484e8941b2da533133fb",
+    "tests/test_core_cli.py": "a3d21560d75e5fe6333976cdc2ec18e0faf7508414a4c428f864507861c40cbf",
+    "tests/test_fifo_admission.py": "b2a14d51faa55cbea46a3359c41614804900c37bb5c54f93ae0d253f3e9de52b",
+    "tests/test_handoff.py": "a8a0af3eb3bdbd468dfacede8c11e28ef4c3ba3082c6ee7bdc1103f9a93150a0",
+    "tests/test_input_roots.py": "38f603e3dffc584b5e054b2d870be74e317b7e1caa57597dc09396c625560be3",
+    "tests/test_native_paths.py": "173041524a3735b559765a86ee66e042bfab47bf6437a25fd28b195d36ac53ec",
+    "tools/release_package.py": "7da2e5a9a8fe68186ef831549ffa94f79ad9173447d459e9688786a1b6720dcc"
+  },
+  "source_files_sha256": "d95e55cb83f1a03a1795ab87b4b0891edcec9db1d7f66997c1ef7ce07a5c68e6",
+  "tag_artifact_hashes": {
+    "SHA256SUMS": "2182d24af4a4efa1db6e5b8d51ab89f64f78e1615fa0654f44d136e78446dfbb",
+    "project_continuity_kit-1.4.1-py3-none-any.whl": "eaa2ead30d9df71429cf6e41c68a8ab11a4ea3607fed27caf6119d58cbef8433",
+    "project_continuity_kit-1.4.1.tar.gz": "02f86476a9b684021bf8cf7d4ef39d50f1bd798318124ab5fd6bce474b5f9522"
+  },
+  "native_contract": {
+    "linux": {
+      "full_tests": 150,
+      "full_passed": 146,
+      "full_skipped": 4,
+      "focused_tests": 8,
+      "focused_passed": 4,
+      "focused_skipped": 4
+    },
+    "windows": {
+      "full_tests": 150,
+      "full_passed": 148,
+      "full_skipped": 2,
+      "allowed_skip_names": [
+        "test_special_file_is_refused_before_open",
+        "test_retarget_to_fifo_is_refused_before_read[chunks]"
+      ],
+      "focused_tests": 8,
+      "focused_passed": 8,
+      "focused_skipped": 0
+    }
+  },
+  "criteria": [
+    {
+      "id": "continuity-linux-installed",
+      "platform": "Linux",
+      "description": "Both exact-tag installed distributions execute complete unchanged90%-gated suite, actual POSIX symlink refusal, byte-bound deterministic bundle generation/match/excluded-match/included-drift/source-preservation and refusal of existing output."
+    },
+    {
+      "id": "continuity-windows-installed",
+      "platform": "Windows",
+      "description": "Both exact-tag installed distributions execute complete unchanged90%-gated suite plus all8focused real OS fixtures: root/ancestor/included/bundle junction and symlink refusal, zero focused skips. Only two explicit POSIX FIFO full-suite skips permitted; no privilege/security/settings changes."
+    }
+  ]
+}
