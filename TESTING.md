@@ -21,3 +21,8 @@ Retain the full original suite and unchanged 90% branch-coverage gate. Regressio
 Run the full suite from fresh installed wheel and sdist environments, outside the source checkout with PYTHONPATH unset. Verify imports come from site-packages, run the actual `continuity-kit` console command for generation/verification, and compare installed README/DEVELOPMENT/TESTING/CHANGELOG/LICENSE/example bytes with the exact tag. Keep the full coverage command before any focused native suite.
 
 `tests/test_native_paths.py` uses real Windows junctions for selected root, root ancestor, included directory and selected bundle. On Windows all four junction cases and all portable symlink cases must execute without skips for each installed artifact; native preflight must refuse unavailable OS capabilities rather than claim acceptance. POSIX FIFO acceptance is legitimately unavailable on Windows. Record platform/interpreter, exact source/ref/payload hashes and source preservation. Native acceptance is pending until actual exact-tag evidence has been independently reviewed.
+
+
+## 1.4.1 release verification
+
+For 1.4.1 release acceptance, use Python 3.12 (or 3.11+) for the release packaging helper because it uses standard-library `tomllib`. The runtime and platform test matrix still support Python 3.10. Run the full original quality suite, `python -m build`, then `python tools/release_package.py`. Independently compare both checksum rows with the exact installed/tag distributions. A mismatched GITHUB_REF_NAME must refuse checksum generation before publication. Require successful protected main and exact-tag jobs; retain actual Windows installed/native acceptance.
