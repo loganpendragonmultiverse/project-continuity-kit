@@ -1,0 +1,125 @@
+"""Exact installed-distribution native QA. Evidence only; no source/release mutation."""
+from __future__ import annotations
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import platform
+import re
+import stat
+import subprocess
+import sys
+import venv
+import xml.etree.ElementTree as ET
+
+
+def sha(path):
+    digest=hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda:handle.read(65536),b""):digest.update(block)
+    return digest.hexdigest()
+
+
+def safe(path):
+    result=Path(path).expanduser().absolute()
+    for part in (result,*result.parents):
+        try:info=part.lstat()
+        except FileNotFoundError:continue
+        if stat.S_ISLNK(info.st_mode) or getattr(info,"st_file_attributes",0)&0x400:
+            raise ValueError("Routing paths must not traverse links/reparse points")
+    return result.resolve()
+
+
+def tests(path):
+    cases=ET.parse(path).getroot().findall(".//testcase")
+    assert cases and not any(c.find("failure") is not None or c.find("error") is not None for c in cases)
+    skipped=[c for c in cases if c.find("skipped") is not None]
+    return {"tests":len(cases),"passed":len(cases)-len(skipped),"skipped":len(skipped),"skipped_names":[c.attrib["name"] for c in skipped]}
+
+
+def main():
+    parser=argparse.ArgumentParser()
+    for name in ("source","artifacts","routing","output"):parser.add_argument("--"+name,required=True)
+    args=parser.parse_args()
+    source,artifacts,routing,output=map(safe,(args.source,args.artifacts,args.routing,args.output))
+    assert source.is_dir() and artifacts.is_dir() and routing.is_file()
+    assert not output.exists() and not output.is_symlink()
+    for existing in (source,artifacts,routing.parent):
+        assert output!=existing and output not in existing.parents and existing not in output.parents,"Output must be new and disjoint"
+    runner_path=Path(__file__).resolve();runner_initial=runner_path.read_bytes()
+    raw=routing.read_bytes();config=json.loads(raw)
+    assert config["slug"]=="project-continuity-kit" and config["module"]=="project_continuity_kit" and config["version"]=="1.4.2"
+    assert platform.system() in {"Windows","Linux"} and sys.version_info>=(3,10)
+    for name in config["source_files"]:
+        relative=Path(name)
+        assert not relative.is_absolute() and all(part not in {".",".."} for part in relative.parts)
+    fingerprint=hashlib.sha256(json.dumps(config["source_files"],sort_keys=True,separators=(",",":")).encode()).hexdigest()
+    assert fingerprint==config["source_files_sha256"]
+    def unchanged():
+        assert routing.read_bytes()==raw and runner_path.read_bytes()==runner_initial
+        for name,digest in config["source_files"].items():assert sha(safe(source/name))==digest,name
+        for name,digest in config["tag_artifact_hashes"].items():assert sha(safe(artifacts/name))==digest,name
+    unchanged()
+    assert set(config["tag_artifact_hashes"])=={"project_continuity_kit-1.4.2-py3-none-any.whl","project_continuity_kit-1.4.2.tar.gz","SHA256SUMS"}
+    sums=[line.split() for line in (artifacts/"SHA256SUMS").read_text().splitlines() if line.strip()]
+    assert len(sums)==2 and {line[1].lstrip("*") for line in sums}==set(config["tag_artifact_hashes"])-{"SHA256SUMS"}
+    assert all(config["tag_artifact_hashes"][name.lstrip("*")]==digest for digest,name in sums)
+    output.mkdir()
+    env=dict(os.environ,PYTHONDONTWRITEBYTECODE="1",PIP_NO_CACHE_DIR="1",PYTHONPATH="")
+    for key in ("PYTEST_ADDOPTS","PYTEST_PLUGINS","COVERAGE_RCFILE"):env.pop(key,None)
+    temp=output/"temp";temp.mkdir();env.update(TMPDIR=str(temp),TMP=str(temp),TEMP=str(temp))
+    record={"slug":config["slug"],"version":config["version"],"commit":config["commit"],"tag_object":config["tag_object"],"tag_run":config["tag_run"],"routing_sha256":hashlib.sha256(raw).hexdigest(),"runner_sha256":sha(Path(__file__).resolve()),"source_files_sha256":fingerprint,"platform":platform.platform(),"system":platform.system(),"python":sys.version,"artifacts":[]}
+    contract=config["native_contract"]["windows" if platform.system()=="Windows" else "linux"]
+    def run(cmd,cwd,log):
+        result=subprocess.run([str(x) for x in cmd],cwd=cwd,env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,check=False)
+        with log.open("x",encoding="utf-8") as handle:handle.write(result.stdout)
+        if result.returncode:raise RuntimeError(f"Command failed ({result.returncode}); see {log}")
+        return result.stdout
+    for index,name in enumerate(sorted(set(config["tag_artifact_hashes"])-{"SHA256SUMS"})):
+        unchanged();root=output/f"artifact-{index}";root.mkdir();work=root/"work";work.mkdir();environment=root/"venv";venv.EnvBuilder(with_pip=True).create(environment)
+        python=environment/("Scripts/python.exe" if os.name=="nt" else "bin/python")
+        run([python,"-B","-m","pip","install",str(artifacts/name),"pytest>=8,<10","pytest-cov>=6,<8"],work,root/"install.log")
+        probe="import project_continuity_kit,sys;from pathlib import Path;assert 'site-packages' in project_continuity_kit.__file__;assert project_continuity_kit.__version__=='1.4.2'; print(project_continuity_kit.__file__); docs=Path(sys.prefix)/'share/doc/project-continuity-kit';source=Path(sys.argv[1]);[(lambda n:None if (docs/n).read_bytes()==(source/n).read_bytes() else (_ for _ in ()).throw(AssertionError(n)))(n) for n in ['README.md','DEVELOPMENT.md','TESTING.md','CHANGELOG.md','LICENSE','examples/sample.json','examples/README.md']]"
+        run([python,"-I","-B","-c",probe,source],work,root/"import-docs.log")
+        env["COVERAGE_FILE"]=str(root/".coverage")
+        full=root/"full.xml";focused=root/"native.xml"
+        base=[python,"-I","-B","-m","pytest","-c",str(source/"pyproject.toml"),"-o","cache_dir="+str(root/"pytest-cache")]
+        log=run(base+[str(source/"tests"),"--basetemp",str(root/"full-tmp"),"--junitxml",str(full)],work,root/"full.log")
+        assert "Required test coverage of 90% reached" in log
+        summary=tests(full)
+        assert all(summary[key]==contract["full_"+key] for key in ("tests","passed","skipped"))
+        if platform.system()=="Windows":assert summary["skipped_names"]==contract["allowed_skip_names"]
+        run(base+[str(source/"tests/test_native_paths.py"),"-o","addopts=","--basetemp",str(root/"native-tmp"),"--junitxml",str(focused)],work,root/"native.log")
+        native=tests(focused);assert all(native[key]==contract["focused_"+key] for key in ("tests","passed","skipped"))
+        if platform.system()=="Windows":assert native["skipped"]==0
+        else:assert all(name.startswith("test_windows_") for name in native["skipped_names"])
+        console=environment/("Scripts/continuity-kit.exe" if os.name=="nt" else "bin/continuity-kit")
+        fixture=work/"fixture";fixture.mkdir();readme=fixture/"README.md";readme.write_bytes(b"Immutable initial observation\n")
+        excluded=fixture/".env";excluded.write_bytes(b"SYNTHETIC_PRIVATE=one\n")
+        spec=work/"spec.json";spec.write_text(json.dumps({"root":str(fixture)}),encoding="utf-8")
+        bundle=work/"bundle.zip"
+        source_before={"README.md":sha(readme),".env":sha(excluded)}
+        generated=json.loads(run([console,spec,"--bundle",bundle,"--format","json"],work,root/"console-generate.log"))
+        assert bundle.is_file() and generated["scan_complete"] is True
+        bundle_initial=sha(bundle)
+        verified=json.loads(run([console,"--verify-bundle",bundle,"--root",fixture],work,root/"console-match.log"))
+        assert verified["matches"] is True and verified["scan_complete"] is True
+        assert source_before=={"README.md":sha(readme),".env":sha(excluded)}
+        excluded.write_bytes(b"SYNTHETIC_PRIVATE=two\n")
+        matched=json.loads(run([console,"--verify-bundle",bundle,"--root",fixture],work,root/"console-excluded.log"))
+        assert matched["matches"] is True
+        readme.write_bytes(b"Changed included evidence\n")
+        drift=json.loads(run([console,"--verify-bundle",bundle,"--root",fixture],work,root/"console-drift.log"))
+        assert drift["matches"] is False and drift["changes"]["changed"]
+        refused=subprocess.run([str(console),str(spec),"--bundle",str(bundle)],cwd=work,env=env,capture_output=True,text=True)
+        with (root/"console-refusal.log").open("x",encoding="utf-8") as handle:handle.write(refused.stdout+refused.stderr)
+        assert refused.returncode==2 and sha(bundle)==bundle_initial
+        unchanged();record["artifacts"].append({"name":name,"sha256":config["tag_artifact_hashes"][name],"full":summary,"native":native,"site_packages_import_verified":True,"installed_docs_verified":True,"coverage_gate":90,"passed":True})
+    unchanged();record["passed"]=True;record["inputs_unchanged"]=True
+    result=output/"RESULT.json"
+    with result.open("x",encoding="utf-8") as handle:json.dump(record,handle,indent=2);handle.write("\n")
+    print(json.dumps({"result":str(result),"sha256":sha(result),"passed":True}))
+
+
+if __name__=="__main__":main()

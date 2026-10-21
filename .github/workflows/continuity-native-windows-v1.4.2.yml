@@ -1,0 +1,58 @@
+name: Exact-tag Continuity native Windows acceptance
+on:
+  push:
+    branches: [qa/continuity-native-windows-v1.4.2-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  native:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.14']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          path: qa-routing
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: a148c2853aad298e8b4bb65acc4e85d119c2f627
+          path: tag-source
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Verify exact frozen transport inputs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $base = Join-Path $env:GITHUB_WORKSPACE 'qa-routing/.github/qa/continuity-native-v1.4.2'
+          if ((Get-FileHash (Join-Path $base 'bootstrap.py') -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'c4ec67f9a598e5652b4170a1f3099a7a6904d238fdb6ad627af59de08225dd4a') { throw 'Bootstrap hash mismatch' }
+          if ((Get-FileHash (Join-Path $base 'run_continuity_native.py.txt') -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'a89e5bbb2cf419f6b103dbd3a10c0d1e8a85caad73c1b38f0a3609d2ec5a1870') { throw 'Runner hash mismatch' }
+          if ((Get-FileHash (Join-Path $base 'routing.json') -Algorithm SHA256).Hash.ToLowerInvariant() -ne '88c56213b0961010188bec0a218a5f3d5fa80c28d7df8f63b0b1290cfce08caa') { throw 'Routing hash mismatch' }
+      - name: Download exact existing official tag artifact
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -I -B qa-routing/.github/qa/continuity-native-v1.4.2/bootstrap.py download
+      - name: Execute genuine native preflight and unchanged installed acceptance
+        shell: pwsh
+        run: python -I -B qa-routing/.github/qa/continuity-native-v1.4.2/bootstrap.py run
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: continuity-native-windows-${{ matrix.python }}
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/continuity-native-*/DOWNLOAD.json
+            ${{ runner.temp }}/continuity-native-*/PREFLIGHT.json
+            ${{ runner.temp }}/continuity-native-*/MATERIALIZATION.json
+            ${{ runner.temp }}/continuity-native-*/acceptance/RESULT.json
+            ${{ runner.temp }}/continuity-native-*/acceptance/artifact-*/*.xml
+            ${{ runner.temp }}/continuity-native-*/acceptance/artifact-*/*.log

@@ -1,0 +1,101 @@
+{
+  "slug": "project-continuity-kit",
+  "module": "project_continuity_kit",
+  "version": "1.4.2",
+  "commit": "a148c2853aad298e8b4bb65acc4e85d119c2f627",
+  "tag": "v1.4.2",
+  "tag_object": "79d4825793f6c743919708a07075c6be98460a04",
+  "tag_run": 39542805129,
+  "source_files": {
+    ".github/CODEOWNERS": "333daf522f45e35b36cd6cd46b40033664810240682721a7ca2f6b99ce4be97a",
+    ".github/ISSUE_TEMPLATE/bug.yml": "2d3dc2366bb5d37fccb3504eac34ddf1fa30bee81fac29e00a5274fade999138",
+    ".github/ISSUE_TEMPLATE/config.yml": "d7b17086263a0799c0201f6fb8fe4d654fba1cf89425023c456cc40db492d68f",
+    ".github/ISSUE_TEMPLATE/feature.yml": "4594a2c388f5b83d035ae786ac37668aeaec01f9b752ebb669c130443d614982",
+    ".github/PULL_REQUEST_TEMPLATE.md": "c23f3cdb67823ab29917b5398bb44cf63a0781922d0148c7cb53c07bd6c6733b",
+    ".github/dependabot.yml": "cb9f0362fef586a179d603bc853a4efe85ed12b59cd950ac0a719f0e1009c70f",
+    ".github/workflows/ci.yml": "a97c6996c740daaaaf068a17de5f206fc8f65bde26f1210f15b116a6d2ca0772",
+    ".github/workflows/codeql.yml": "44ce224de74b39f9f182917dd253d5b598feaa769fbdd17016b5ceca477588cd",
+    ".github/workflows/release.yml": "b52abd34b76a2a748fbdafa03cb8a6ad468c6548cccf0a06210f1040536f179c",
+    ".gitignore": "5ffd2d0c55f65d1339eb0a22a3057c90b9f0200486d9271b1837f7a77b841704",
+    "CHANGELOG.md": "c323f7c0c8f415ac01f33f52339e9371207e07a02832d99db6726826ba5963ec",
+    "CODE_OF_CONDUCT.md": "f192ebeaab7930863403aa14ec66746ba02ada4dfa0f7ddee9edd941790f77f1",
+    "CONTRIBUTING.md": "a855d1908bb89be2e2a2dd13ed2125632f8ef4f299397fdaed17261e56765847",
+    "DEVELOPMENT.md": "264b8b99d6468e6ee01fdc595e2d31f26e435facdc54512aa27618905efe5bed",
+    "LICENSE": "55a70b9017dbf171520ab336a0b3b2f4283878d87008382e1f5209afa97dd73b",
+    "MANIFEST.in": "8c315c29c7da0879506000b72795d03875d21c7602f145f5dbd9445a3ddfd350",
+    "README.md": "17271b463a4a453f852254ef22739eedaab3f8bf70d7354bfd033c6cf6843ceb",
+    "SECURITY.md": "95ed04c98af6869af1b1151d6ed5ccb0728af5fe96db3d154a6bd62932b49f43",
+    "SUPPORT.md": "84798345f278ce2cac2d99df3062fc3fc672f5cc7d76cd6fd6f7e76e96ff6149",
+    "TESTING.md": "92b35b38357621146a7fdba6b32f377e5598b7547711f7c80440f62bee595519",
+    "examples/README.md": "a6a96e26633011c76ca4940cf22a9911c2b119c751df2edfe9682af13098eefc",
+    "examples/sample.json": "de684bdb2cfb2ebb7fbf1cf9e7377fdae2c0c4b849df85713e9b3fc875a61397",
+    "pyproject.toml": "874ecf2ee7e0c27cadbb7191e5ba4dcac2d9646b3307c21abbd490cd794cc158",
+    "src/project_continuity_kit/__init__.py": "97b57db03740931bc361b250b8babc46301624c15298ada1403d75dfc7974273",
+    "src/project_continuity_kit/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+    "src/project_continuity_kit/bundle_io.py": "939d458b66ffba8614a71f12d02a048ee138680d56c18eae8a6fdf10c818f56d",
+    "src/project_continuity_kit/cli.py": "c11008e348f575af1965870a993e200aafec6014b2c390787a1c0b63814b017b",
+    "src/project_continuity_kit/core.py": "ca04581f831f795a3ebd4a76cab323596558423911463874a89bbdf5603b1bca",
+    "src/project_continuity_kit/filesystem.py": "5f0822e6a6bc3a15ce3714f5b7ff33f0f818c59bd754101693e9ae679f0eb807",
+    "src/project_continuity_kit/handoff.py": "42d2bd5a5c3fb2e8feecdb0ef3da447a822de15cbd6bb115675db6e4814ffd45",
+    "tests/test_bounded_regression.py": "d44afca824ee81bd1ba98a66629fe062a37fa513ca01e369fa97f54a03c8e0d9",
+    "tests/test_bundle_boundaries.py": "85a6f1d5503672a0fb504b31a230cea990416d5613386ed15b7e7984ea523e1b",
+    "tests/test_complete_observations.py": "a94397963212b0332ceeda54ce692a3d23ba7b4963d4484e8941b2da533133fb",
+    "tests/test_core_cli.py": "a3d21560d75e5fe6333976cdc2ec18e0faf7508414a4c428f864507861c40cbf",
+    "tests/test_fifo_admission.py": "b2a14d51faa55cbea46a3359c41614804900c37bb5c54f93ae0d253f3e9de52b",
+    "tests/test_handoff.py": "a8a0af3eb3bdbd468dfacede8c11e28ef4c3ba3082c6ee7bdc1103f9a93150a0",
+    "tests/test_input_roots.py": "38f603e3dffc584b5e054b2d870be74e317b7e1caa57597dc09396c625560be3",
+    "tests/test_native_paths.py": "173041524a3735b559765a86ee66e042bfab47bf6437a25fd28b195d36ac53ec",
+    "tests/test_release_package.py": "1a9e9d2cbc1a877310a711be4e0e7700f204da5b4d439d6a6ff41b2261dd137a",
+    "tools/release_package.py": "c849d8cb57cc10e4094ddcca036ccc394bab4d6d8fa6ca7255c1200be88c5cf5"
+  },
+  "source_files_sha256": "3d5945c2f242d4942cccd1773faf00c1d273df953776ee387dad20cfc9d7c0f8",
+  "tag_artifact_hashes": {
+    "SHA256SUMS": "beb065e418ed20f92559fcaad87ad4b0e23797525e46f367c95c58aef3a72152",
+    "project_continuity_kit-1.4.2-py3-none-any.whl": "ade981e8f5c63713a59e01b2053a5b206a312a43aa0b929c20c387b452f7c2d4",
+    "project_continuity_kit-1.4.2.tar.gz": "f953046af606f8789c06b8d74f811ed0219d01672c3cedf8fc7b74d5f607e2aa"
+  },
+  "native_contract": {
+    "linux": {
+      "full_tests": 175,
+      "full_passed": 171,
+      "full_skipped": 4,
+      "focused_tests": 8,
+      "focused_passed": 4,
+      "focused_skipped": 4
+    },
+    "windows": {
+      "full_tests": 175,
+      "full_passed": 173,
+      "full_skipped": 2,
+      "allowed_skip_names": [
+        "test_special_file_is_refused_before_open",
+        "test_retarget_to_fifo_is_refused_before_read[chunks]"
+      ],
+      "focused_tests": 8,
+      "focused_passed": 8,
+      "focused_skipped": 0
+    }
+  },
+  "criteria": [
+    {
+      "id": "continuity-linux-installed",
+      "platform": "Linux",
+      "description": "Both exact-tag installed distributions execute complete unchanged90%-gated suite, actual POSIX symlink refusal, byte-bound deterministic bundle generation/match/excluded-match/included-drift/source-preservation and refusal of existing output."
+    },
+    {
+      "id": "continuity-windows-installed",
+      "platform": "Windows",
+      "description": "Both exact-tag installed distributions execute complete unchanged90%-gated suite plus all8focused real OS fixtures: root/ancestor/included/bundle junction and symlink refusal, zero focused skips. Only two explicit POSIX FIFO full-suite skips permitted; no privilege/security/settings changes."
+    }
+  ],
+  "runtime_contract_sha256": "2fa717e057194be137668bd94a12bb35f5998938ccce3b07c18d1e77a17c96aa",
+  "runtime_contract": {
+    "Linux": [
+      "3.14"
+    ],
+    "Windows": [
+      "3.10",
+      "3.14"
+    ]
+  }
+}
