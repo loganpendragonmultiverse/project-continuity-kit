@@ -21,3 +21,8 @@ New reports include scan_scope version 1: sorted unique excluded_names (the effe
 Keep the schema-3 report and legacy scope fallback compatible. Recorded version-1 scan limits are complete, typed and capped; a failed or partial scan must never report a verified match. Inventory and all prerequisite reads share exclusions and observed hashes. Preserve bounded full-stream ZIP validation, duplicate-key rejection, file-list fingerprint and VERIFY binding. Refuse linked/reparse paths before canonical resolution. Existing outputs are never replaced. This is local evidence comparison, not a backup system or command executor.
 
 Native filesystem behavior requires actual Windows junction/symlink execution and POSIX symlink/FIFO execution, not mocked lstat metadata. Candidate CI and local installed tests do not substitute for exact-tag installed artifact review and required native acceptance. Public release remains pending until those gates and protected checks pass.
+
+
+## 1.4.1 release verification
+
+Release closure in 1.4.1 repeats the complete formatting, lint, strict types, original regression/coverage and dependency audit gates before building. `tools/release_package.py` validates runtime/package/tag versions and writes SHA256SUMS for exactly the current wheel and source distribution. Original CI matrix/protections and all feature tests remain unchanged.

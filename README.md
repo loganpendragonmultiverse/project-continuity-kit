@@ -69,3 +69,8 @@ Bundles are limited to 32 MiB, four known metadata members (or the three legacy 
 CLI outputs must be outside the scanned root or beneath an excluded component such as `build/`; this prevents a newly generated report becoming immediate source drift. Report and bundle destinations are checked together, must be distinct new paths, and use exclusive creation. A later I/O error can leave one newly created output; inspect it and choose fresh names when retrying. Existing files, dangling links and linked ancestors are refused. Source trees should remain quiescent; this tool does not provide a transactional filesystem snapshot or defend against hostile concurrent path replacement.
 
 Explicit redaction terms cover owners, checklist step/evidence notes and section values. Technical paths, IDs, hashes, signal names and prerequisite subjects remain evidence, not anonymous data. Review every package before sharing; secret-shaped section keys are redacted, but arbitrary secrets cannot be inferred. No source content or environment value is exported and no recovery command is executed.
+
+
+## 1.4.1 release verification
+
+The 1.4.1 release includes `SHA256SUMS` for the exact wheel and source distribution. The release job repeats the full quality gate and refuses a tag/package/runtime version mismatch.

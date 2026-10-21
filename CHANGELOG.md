@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.1] - 2026-10-21
+
+- Repeat full formatting, lint, strict types, regression, audit and build checks in the exact-tag release workflow.
+- Check runtime/package/tag version agreement and ship SHA256SUMS covering exactly the wheel and source distribution.
+- Pin release actions to reviewed official commits; retain the original platform matrix and coverage requirements.
+
 ## [1.4.0] - 2026-10-21
 
 - Fail closed on incomplete, unsafe, changed or over-budget inventories and record reusable scan limits.
